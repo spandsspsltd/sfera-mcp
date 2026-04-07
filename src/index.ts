@@ -12,6 +12,8 @@
  *   MCP_API_KEY           — Shared secret between Claude connector and this server
  */
 
+import 'dotenv/config';
+
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
