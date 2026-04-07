@@ -9,7 +9,8 @@
  * Required environment variables:
  *   SUPABASE_URL          — https://iclairkjhebamzjtzncq.supabase.co
  *   SUPABASE_SERVICE_KEY  — Supabase service_role key (bypasses RLS — NEVER expose client-side)
- *   MCP_API_KEY           — Shared secret between Claude connector and this server
+ *   MCP_API_KEY                  — Shared secret between Claude connector and this server
+ *   SUPABASE_SERVICE_ROLE_KEY    — Alias for service_role key if preferred
  */
 
 import { createServer } from 'http';
@@ -25,12 +26,29 @@ import { z } from "zod";
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 
-const SUPABASE_URL   = process.env.SUPABASE_URL   ?? "";
-const SERVICE_KEY    = process.env.SUPABASE_SERVICE_KEY ?? "";
-const MCP_API_KEY    = process.env.MCP_API_KEY    ?? "";
+const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY
+  ?? process.env.SUPABASE_SERVICE_ROLE_KEY
+  ?? process.env.SUPABASE_KEY
+  ?? process.env.SUPABASE_SERVICE_ROLE
+  ?? "";
+const MCP_API_KEY = process.env.MCP_API_KEY ?? process.env.MCP_KEY ?? "";
+
+process.stderr.write(
+  `ENV DEBUG: PORT=${process.env.PORT ?? "<unset>"}, ` +
+  `SUPABASE_URL=${Boolean(process.env.SUPABASE_URL)}, ` +
+  `SUPABASE_SERVICE_KEY=${Boolean(process.env.SUPABASE_SERVICE_KEY)}, ` +
+  `SUPABASE_SERVICE_ROLE_KEY=${Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY)}, ` +
+  `SUPABASE_KEY=${Boolean(process.env.SUPABASE_KEY)}, ` +
+  `SUPABASE_SERVICE_ROLE=${Boolean(process.env.SUPABASE_SERVICE_ROLE)}, ` +
+  `MCP_API_KEY=${Boolean(process.env.MCP_API_KEY)}, ` +
+  `MCP_KEY=${Boolean(process.env.MCP_KEY)}\n`
+);
 
 if (!SUPABASE_URL || !SERVICE_KEY) {
-  process.stderr.write("FATAL: SUPABASE_URL and SUPABASE_SERVICE_KEY must be set\n");
+  process.stderr.write(
+    "FATAL: SUPABASE_URL and SUPABASE_SERVICE_KEY (or SUPABASE_SERVICE_ROLE_KEY) must be set\n"
+  );
   process.exit(1);
 }
 
