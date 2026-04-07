@@ -4,7 +4,7 @@
  * Document: SFERA-MCP-SRV-2026-001
  *
  * Connects Claude.ai to the SFERA Supabase backend via 10 authenticated tools.
- * Deploy on Railway. Register as Claude custom connector.
+ * Deploy on Render or Railway. Register as Claude custom connector.
  *
  * Required environment variables:
  *   SUPABASE_URL          — https://iclairkjhebamzjtzncq.supabase.co
@@ -12,10 +12,9 @@
  *   MCP_API_KEY           — Shared secret between Claude connector and this server
  */
 
-import 'dotenv/config';
-
+import { createServer } from 'http';
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -319,6 +318,8 @@ async function dispatch(name: string, args: Record<string, unknown>): Promise<Ca
 
 // ─── SERVER ───────────────────────────────────────────────────────────────────
 
+const PORT = parseInt(process.env.PORT || '3000');
+
 const server = new Server(
   { name: "sfera-trade-portal", version: "1.0.0" },
   { capabilities: { tools: {} } }
@@ -326,10 +327,36 @@ const server = new Server(
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
 
-server.setRequestHandler(CallToolRequestSchema, async (req) => {
+server.setRequestHandler(CallToolRequestSchema, async (req: any) => {
   const { name, arguments: args } = req.params;
   return dispatch(name, (args ?? {}) as Record<string, unknown>);
 });
 
-await server.connect(new StdioServerTransport());
-process.stderr.write("SFERA MCP Server v1.0.0 — connected\n");
+const httpServer = createServer(async (req, res) => {
+  if (req.method === 'POST' && req.url === '/mcp') {
+    const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+    await server.connect(transport);
+
+    let body = '';
+    req.on('data', chunk => body += chunk.toString());
+    req.on('end', async () => {
+      try {
+        const parsedBody = JSON.parse(body);
+        await transport.handleRequest(req, res, parsedBody);
+      } catch (e) {
+        console.error('Error handling request:', e);
+        if (!res.headersSent) {
+          res.statusCode = 500;
+          res.end('Internal server error');
+        }
+      }
+    });
+  } else {
+    res.statusCode = 404;
+    res.end('Not found');
+  }
+});
+
+httpServer.listen(PORT, () => {
+  process.stderr.write(`SFERA MCP Server v1.0.0 — running on port ${PORT}\n`);
+});
