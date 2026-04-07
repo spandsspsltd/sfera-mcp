@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import 'dotenv/config';
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
@@ -10,8 +11,15 @@ const SERVICE_KEY  = process.env.SUPABASE_SERVICE_KEY ?? "";
 const MCP_API_KEY  = process.env.MCP_API_KEY         ?? "";
 const PORT         = parseInt(process.env.PORT        ?? "3000", 10);
 
+// Debug: log what we found
+process.stderr.write(`[ENV] SUPABASE_URL: ${SUPABASE_URL ? "✓ set" : "✗ missing"}\n`);
+process.stderr.write(`[ENV] SUPABASE_SERVICE_KEY: ${SERVICE_KEY ? "✓ set" : "✗ missing"}\n`);
+process.stderr.write(`[ENV] MCP_API_KEY: ${MCP_API_KEY ? "✓ set" : "✗ missing"}\n`);
+process.stderr.write(`[ENV] PORT: ${PORT}\n`);
+
 if (!SUPABASE_URL || !SERVICE_KEY || !MCP_API_KEY) {
   process.stderr.write("FATAL: SUPABASE_URL, SUPABASE_SERVICE_KEY and MCP_API_KEY required\n");
+  process.stderr.write(`[DEBUG] Available keys: ${Object.keys(process.env).filter(k => k.includes('SUPABASE') || k.includes('MCP')).join(', ')}\n`);
   process.exit(1);
 }
 

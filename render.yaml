@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: sfera-mcp
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: SUPABASE_URL
+        scope: run
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        scope: run
+        sync: false
+      - key: MCP_API_KEY
+        scope: run
+        sync: false
