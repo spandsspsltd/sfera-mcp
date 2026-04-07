@@ -7,7 +7,7 @@ import { z } from "zod";
 import http from "http";
 
 const SUPABASE_URL = process.env.SUPABASE_URL        ?? "";
-const SERVICE_KEY  = process.env.SUPABASE_SERVICE_KEY ?? "";
+const SERVICE_KEY  = process.env.SUPABASE_SERVICE_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
 const MCP_API_KEY  = process.env.MCP_API_KEY         ?? "";
 const PORT         = parseInt(process.env.PORT        ?? "3000", 10);
 
